@@ -77,9 +77,14 @@ namespace TextToWav
                     {
                         voice = parsed.Value.Voice;
                     }
+
+                    if (parsed.Value.Volume > 0)
+                    {
+                        synth.Volume = parsed.Value.Volume;
+                    }
+
                     synth.SelectVoice(voice);
                     synth.Rate = parsed.Value.Rate;
-                    synth.Volume = parsed.Value.Volume;
                     synth.Speak(text);
                 }
             }
