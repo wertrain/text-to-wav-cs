@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Speech.Synthesis;
-using CommandLine;
-using CommandLine.Text;
+using CommandLineParser;
 using System.IO;
 
 namespace TextToWav
@@ -36,11 +35,11 @@ namespace TextToWav
     {
         static void Main(string[] args)
         {
-            var result = Parser.Default.ParseArguments<Options>(args);
+            var result = Parser.Parse<Options>(args);
             if (result.Tag == ParserResultType.Parsed)
             {
                 // パース成功時
-                var parsed = (Parsed<Options>)result;
+                var parsed = result;
 
                 using (SpeechSynthesizer synth = new SpeechSynthesizer())
                 {
@@ -90,9 +89,7 @@ namespace TextToWav
             }
             else
             {
-                var notParsed = (NotParsed<Options>)result;
-                var helpText = HelpText.AutoBuild(notParsed);
-                Console.WriteLine(helpText);
+                Parser.ShowHelp<Option>();
             }
         }
     }
