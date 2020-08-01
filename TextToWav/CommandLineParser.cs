@@ -1,5 +1,5 @@
 ﻿// There is no license for this code. You are free to modify and redistribute it. Also, you can delete this comment.
-// Original source code: https://github.com/wertrain (Version 0.1)
+// Original source code: https://github.com/wertrain/command-line-parser-cs (Version 0.1)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,7 +84,7 @@ namespace CommandLineParser
         /// <summary>
         /// 
         /// </summary>
-        NotParsed = 1
+        NotParsed
     }
 
     /// <summary>
@@ -112,25 +112,6 @@ namespace CommandLineParser
         /// 
         /// </summary>
         public T Value { get; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public Dictionary<string, bool> ExistsOptionDictionary { get; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="propertyInfo"></param>
-        /// <returns></returns>
-        public bool ExistsOption(PropertyInfo propertyInfo)
-        {
-            if (ExistsOptionDictionary.ContainsKey(propertyInfo.PropertyType.Name))
-            {
-                return ExistsOptionDictionary[propertyInfo.PropertyType.Name];
-            }
-            return false;
-        }
     }
 
     /// <summary>
@@ -167,13 +148,24 @@ namespace CommandLineParser
             switch (property.PropertyType.Name)
             {
                 case "Boolean":
-                    property.SetValue(value, true);
-                    return param.ToLower() == "true" || param.ToLower() == "false";
+                    if (string.IsNullOrEmpty(param))
+                    {
+                        property.SetValue(value, true);
+                    }
+                    else
+                    {
+                        switch (param.ToLower())
+                        {
+                            case "true": property.SetValue(value, true); return true;
+                            case "false": property.SetValue(value, false); return true;
+                        }
+                    }
+                    return false;
 
                 case "Byte": property.SetValue(value, ConvertValue<byte>(param)); break;
                 case "SByte": property.SetValue(value, ConvertValue<sbyte>(param)); break;
                 case "Char": property.SetValue(value, ConvertValue<char>(param)); break;
-                case "Decimal": property.SetValue(value, ConvertValue<Decimal>(param)); break;
+                case "Decimal": property.SetValue(value, ConvertValue<decimal>(param)); break;
                 case "Double": property.SetValue(value, ConvertValue<double>(param)); break;
                 case "Single": property.SetValue(value, ConvertValue<float>(param)); break;
                 case "Int32": property.SetValue(value, ConvertValue<int>(param)); break;
@@ -186,7 +178,7 @@ namespace CommandLineParser
                 case "String":
                     property.SetValue(value, param);
                     return !string.IsNullOrEmpty(param);
-            } 
+            }
             return true;
         }
     }
@@ -212,7 +204,7 @@ namespace CommandLineParser
             if (args.Count() == 0)
             {
                 ShowHelp<T>();
-                return null;
+                return new ParserResult<T>(ParserResultType.NotParsed, new T());
             }
 
             var longNameDictionary = new Dictionary<string, Tuple<string, Option>>();
@@ -251,7 +243,8 @@ namespace CommandLineParser
                     if (command == HelpLongName)
                     {
                         ShowHelp<T>();
-                        return null;
+
+                        return new ParserResult<T>(ParserResultType.Parsed, new T());
                     }
 
                     if (longNameDictionary.ContainsKey(command))
@@ -285,21 +278,20 @@ namespace CommandLineParser
                     {
                         string param = string.Empty;
 
-                        if (args.Count() > ++i)
+                        if (args.Count() > i + 1)
                         {
-                            param = args.ElementAt(i);
+                            param = args.ElementAt(i + 1);
                         }
 
                         try
                         {
-                            if (!ParserUtility.SetValueToProperty<T>(property, value, param))
+                            if (ParserUtility.SetValueToProperty<T>(property, value, param))
                             {
-                                --i;
+                                ++i;
                             }
                         }
                         catch
                         {
-                            --i;
                             resultTag = ParserResultType.NotParsed;
                         }
                     }
