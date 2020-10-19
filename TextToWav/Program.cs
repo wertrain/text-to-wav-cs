@@ -29,6 +29,9 @@ namespace TextToWav
         // ボリューム
         [Option('v', "volume", Required = false, HelpText = "Speech Volume")]
         public int Volume { get; set; }
+        // 無視する単語
+        [Option('g', "ignore", Required = false, HelpText = "Ignore Words file path")]
+        public string IgnoreWords { get; set; }
     }
 
     class Program
@@ -60,6 +63,23 @@ namespace TextToWav
                     else
                     {
                         return;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(parsed.Value.IgnoreWords))
+                    {
+                        var ignoreWords = new List<string>();
+                        using (StreamReader sr = new StreamReader(parsed.Value.IgnoreWords))
+                        {
+                            string rawWords = sr.ReadToEnd();
+                            ignoreWords.AddRange(
+                                rawWords.Split(new string[] { "\r\n", ",", "\t" }, StringSplitOptions.RemoveEmptyEntries)
+                            );
+                        }
+
+                        foreach (var word in ignoreWords)
+                        {
+                            text = text.Replace(word, "");
+                        }
                     }
 
                     if (string.IsNullOrWhiteSpace(parsed.Value.Output))
